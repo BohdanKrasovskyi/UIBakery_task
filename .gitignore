@@ -1,11 +1,29 @@
-/tmp
-/out-tsc
-
+# Node.js dependencies
 /node_modules
+
+# TypeScript build output
+/dist
+/out-tsc
+/tmp
+
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Environment variables
+.env
+
+# WebStorm/JetBrains IDE
+.idea/
+*.iml
+
+# VSCode settings
+.vscode/*
+
+# Optional: macOS
+.DS_Store
+
+# Optional: lock files if using pnpm
 /.pnp
 .pnp.js
-
-.vscode/*
