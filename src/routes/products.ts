@@ -10,59 +10,47 @@ router.get("/", async (req, res) => {
     const limit = 20;
     const offset = (page - 1) * limit;
 
-    // Фільтри (масиви чисел)
-    const brands = req.query.brands?.toString().split(",").map(Number) || [];
-    const categories = req.query.categories?.toString().split(",").map(Number) || [];
+    const brandsFilter: number[] = req.query.brands?.toString().split(",").map(Number) || [];
+    const categoriesFilter: number[] = req.query.categories?.toString().split(",").map(Number) || [];
 
     try {
-        // SQL умовні частини
         const whereClauses: string[] = [`p.name ILIKE $1`];
         const values: any[] = [`%${search}%`];
-        let idx = 2; // для параметрів $2, $3 і т.д.
+        let idx = 2;
 
-        if (brands.length > 0) {
+        if (brandsFilter.length > 0) {
             whereClauses.push(`p.brand_id = ANY($${idx}::bigint[])`);
-            values.push(brands);
+            values.push(brandsFilter);
             idx++;
         }
 
-        if (categories.length > 0) {
+        if (categoriesFilter.length > 0) {
             whereClauses.push(`pc.category_id = ANY($${idx}::bigint[])`);
-            values.push(categories);
+            values.push(categoriesFilter);
             idx++;
         }
 
-        // SQL з LEFT JOIN на product_categories
         const query = `
             SELECT DISTINCT p.*
             FROM products p
             LEFT JOIN product_categories pc ON p.id = pc.product_id
-            WHERE ${whereClauses.join(" AND ")}
+            ${whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : ""}
             ORDER BY p.name
             LIMIT $${idx} OFFSET $${idx + 1}
         `;
+
         values.push(limit, offset);
 
         const result = await pool.query(query, values);
 
-        // Підрахунок загальної кількості (без LIMIT/OFFSET)
-        const countQuery = `
-            SELECT COUNT(DISTINCT p.id) AS total
-            FROM products p
-            LEFT JOIN product_categories pc ON p.id = pc.product_id
-            WHERE ${whereClauses.join(" AND ")}
-        `;
-        const countResult = await pool.query(countQuery, values.slice(0, idx - 1));
-        const total = parseInt(countResult.rows[0].total);
-
         res.json({
             page,
             limit,
-            total,
-            data: result.rows,
+            total: result.rowCount,
+            data: result.rows
         });
     } catch (err: any) {
-        console.error("DB ERROR:", err.message);
+        console.error("PRODUCTS DB ERROR:", err.message);
         res.status(500).json({ error: "Database error" });
     }
 });
