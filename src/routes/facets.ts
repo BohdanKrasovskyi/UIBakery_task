@@ -3,17 +3,15 @@ import { pool } from "../db/client"; // твій файл підключення
 
 const router = Router();
 
-// GET /facets?search=apple
 router.get("/", async (req, res) => {
     const search = req.query.search?.toString() || "";
 
     try {
-        // Підрахунок брендів
         const brands = await pool.query(
-            `SELECT b.name, COUNT(p.id) as count
+            `SELECT b.name, COUNT(p.id) AS count
        FROM products p
        JOIN brands b ON p.brand_id = b.id
-       WHERE p.product_name ILIKE $1
+       WHERE p.name ILIKE $1
        GROUP BY b.name
        ORDER BY count DESC`,
             [`%${search}%`]
@@ -21,12 +19,11 @@ router.get("/", async (req, res) => {
 
         // Підрахунок категорій
         const categories = await pool.query(
-            `SELECT c.name, COUNT(pc.product_id) as count
-       FROM products p
-       JOIN product_categories pc ON p.id = pc.product_id
-       JOIN categories c ON pc.category_id = c.id
-       WHERE p.product_name ILIKE $1
-       GROUP BY c.name
+            `SELECT pc.category AS name, COUNT(pc.product_id) AS count
+       FROM product_categories pc
+       JOIN products p ON p.id = pc.product_id
+       WHERE p.name ILIKE $1
+       GROUP BY pc.category
        ORDER BY count DESC`,
             [`%${search}%`]
         );
