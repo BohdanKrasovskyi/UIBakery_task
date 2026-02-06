@@ -7,7 +7,7 @@ router.get("/", async (req, res) => {
     const search = req.query.search?.toString() || "";
 
     try {
-        // Бренди з LEFT JOIN, щоб враховувати товари без бренду
+        // Бренди з LEFT JOIN
         const brands = await pool.query(
             `SELECT b.name, COUNT(p.id) AS count
              FROM products p
@@ -18,13 +18,14 @@ router.get("/", async (req, res) => {
             [`%${search}%`]
         );
 
-        // Категорії
+        // Категорії через JOIN на categories
         const categories = await pool.query(
-            `SELECT pc.category AS name, COUNT(pc.product_id) AS count
+            `SELECT c.name, COUNT(pc.product_id) AS count
              FROM product_categories pc
+             JOIN categories c ON pc.category_id = c.id
              JOIN products p ON p.id = pc.product_id
              WHERE p.name ILIKE $1
-             GROUP BY pc.category
+             GROUP BY c.name
              ORDER BY count DESC`,
             [`%${search}%`]
         );
