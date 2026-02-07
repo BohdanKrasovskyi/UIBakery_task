@@ -43,7 +43,7 @@ router.get("/", async (req, res) => {
 
         const whereSQL = where.join(" AND ");
 
-        // COUNT
+
         const countQuery = `
             SELECT COUNT(DISTINCT p.id) AS total
             FROM products p
@@ -53,7 +53,6 @@ router.get("/", async (req, res) => {
         const countResult = await pool.query(countQuery, values);
         const total = Number(countResult.rows[0].total);
 
-        // DATA
         const dataQuery = `
             SELECT DISTINCT p.*
             FROM products p
