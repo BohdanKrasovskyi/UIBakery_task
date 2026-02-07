@@ -6,9 +6,17 @@ const router = Router();
 // GET /products?search=yogurt&brands=1,2&categories=2,5&page=1
 router.get("/", async (req, res) => {
     const search = req.query.search?.toString() || "";
-    const brandsFilter = req.query.brands?.toString().split(",").map(Number) || [];
-    const categoriesFilter = req.query.categories?.toString().split(",").map(Number) || [];
-    const page = parseInt(req.query.page?.toString() || "1");
+    const parseIdList = (value: unknown): number[] =>
+        value
+            ? value
+                  .toString()
+                  .split(",")
+                  .map((entry) => Number(entry))
+                  .filter((entry) => Number.isFinite(entry) && entry > 0)
+            : [];
+    const brandsFilter = parseIdList(req.query.brands);
+    const categoriesFilter = parseIdList(req.query.categories);
+    const page = Math.max(parseInt(req.query.page?.toString() || "1"), 1);
     const limit = 20;
     const offset = (page - 1) * limit;
 
@@ -31,6 +39,15 @@ router.get("/", async (req, res) => {
             idx++;
         }
 
+        const countQuery = `
+      SELECT COUNT(DISTINCT p.id) AS total
+      FROM products p
+      ${joinCategories}
+      WHERE ${whereClauses.join(" AND ")}
+    `;
+
+        const countResult = await pool.query(countQuery, values);
+
         const query = `
       SELECT DISTINCT p.*
       FROM products p
@@ -46,7 +63,7 @@ router.get("/", async (req, res) => {
         res.json({
             page,
             limit,
-            total: result.rowCount,
+            total: Number(countResult.rows[0]?.total || 0),
             data: result.rows
         });
     } catch (err: any) {

@@ -6,8 +6,16 @@ const router = Router();
 // GET /facets?search=yogurt&brands=1,2&categories=5,7
 router.get("/", async (req, res) => {
     const search = req.query.search?.toString() || "";
-    const brandsFilter: number[] = req.query.brands?.toString().split(",").map(Number) || [];
-    const categoriesFilter: number[] = req.query.categories?.toString().split(",").map(Number) || [];
+    const parseIdList = (value: unknown): number[] =>
+        value
+            ? value
+                  .toString()
+                  .split(",")
+                  .map((entry) => Number(entry))
+                  .filter((entry) => Number.isFinite(entry) && entry > 0)
+            : [];
+    const brandsFilter = parseIdList(req.query.brands);
+    const categoriesFilter = parseIdList(req.query.categories);
 
     try {
         // -------------------
