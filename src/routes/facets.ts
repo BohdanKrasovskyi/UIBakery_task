@@ -19,7 +19,6 @@ router.get("/", async (req, res) => {
     const categoriesFilter = parseIdList(req.query.categories);
 
     try {
-        // ---------------- COMMON WHERE ----------------
         const baseWhere: string[] = ["p.name ILIKE $1"];
         const baseValues: any[] = [`%${search}%`];
         let idx = 2;
@@ -40,7 +39,6 @@ router.get("/", async (req, res) => {
 
         const whereSQL = baseWhere.join(" AND ");
 
-        // ---------------- BRANDS FACET ----------------
         const brandsQuery = `
             SELECT b.id, b.name, COUNT(DISTINCT p.id) AS count
             FROM products p
@@ -52,7 +50,6 @@ router.get("/", async (req, res) => {
         `;
         const brandsResult = await pool.query(brandsQuery, baseValues);
 
-        // ---------------- CATEGORIES FACET ----------------
         const categoriesQuery = `
             SELECT c.id, c.name, COUNT(DISTINCT p.id) AS count
             FROM products p
