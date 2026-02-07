@@ -3,11 +3,20 @@ import { pool } from "../db/client";
 
 const router = Router();
 
+const parseIdList = (value: unknown): number[] => {
+    if (value === undefined || value === null) return [];
+    const raw = Array.isArray(value) ? value.join(",") : value.toString();
+    return raw
+        .split(",")
+        .map((item) => Number(item.trim()))
+        .filter((item) => Number.isFinite(item));
+};
+
 // GET /facets?search=yogurt&brands=1,2&categories=5,7
 router.get("/", async (req, res) => {
     const search = req.query.search?.toString() || "";
-    const brandsFilter: number[] = req.query.brands?.toString().split(",").map(Number) || [];
-    const categoriesFilter: number[] = req.query.categories?.toString().split(",").map(Number) || [];
+    const brandsFilter = parseIdList(req.query.brands);
+    const categoriesFilter = parseIdList(req.query.categories);
 
     try {
         // -------------------

@@ -3,11 +3,20 @@ import { pool } from "../db/client";
 
 const router = Router();
 
+const parseIdList = (value: unknown): number[] => {
+    if (value === undefined || value === null) return [];
+    const raw = Array.isArray(value) ? value.join(",") : value.toString();
+    return raw
+        .split(",")
+        .map((item) => Number(item.trim()))
+        .filter((item) => Number.isFinite(item));
+};
+
 // GET /products?search=yogurt&brands=1,2&categories=2,5&page=1
 router.get("/", async (req, res) => {
     const search = req.query.search?.toString() || "";
-    const brandsFilter = req.query.brands?.toString().split(",").map(Number) || [];
-    const categoriesFilter = req.query.categories?.toString().split(",").map(Number) || [];
+    const brandsFilter = parseIdList(req.query.brands);
+    const categoriesFilter = parseIdList(req.query.categories);
     const page = parseInt(req.query.page?.toString() || "1");
     const limit = 20;
     const offset = (page - 1) * limit;
